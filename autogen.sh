@@ -58,8 +58,11 @@ if [ ! -d "$srcdir/build-scripts" ]; then
 	mkdir "$srcdir/build-scripts"
 fi
 
+echo "doing aclocal"
 run_cmd aclocal
+echo "doing automake"
 run_cmd automake --add-missing --copy
+echo "doing autoconf"
 run_cmd autoconf
 
 $srcdir/configure && echo

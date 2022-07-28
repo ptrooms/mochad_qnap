@@ -1,0 +1,84 @@
+[/opt/mochad] $ make
+gcc -DPACKAGE_NAME=\"mochad\" -DPACKAGE_TARNAME=\"mochad\" -DPACKAGE_VERSION=\"0.1.14\" -DPACKAGE_STRING=\"mochad\ 0.1.14\" -DPACKAGE_BUGREPORT=\"mmauka@users.sourceforge.net\" -DPACKAGE_URL=\"\" -DPACKAGE=\"mochad\" -DVERSION=\"0.1.14\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FCNTL_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYSLOG_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FORK=1 -DHAVE_VFORK=1 -DHAVE_WORKING_VFORK=1 -DHAVE_WORKING_FORK=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DHAVE_ALARM=1 -DHAVE_MEMSET=1 -DHAVE_SELECT=1 -DHAVE_SOCKET=1 -DHAVE_STRERROR=1 -DHAVE_STRTOL=1 -DHAVE_STRTOUL=1 -I.     -g -O2 -MT mochad.o -MD -MP -MF .deps/mochad.Tpo -c -o mochad.o mochad.c
+mv -f .deps/mochad.Tpo .deps/mochad.Po
+gcc -DPACKAGE_NAME=\"mochad\" -DPACKAGE_TARNAME=\"mochad\" -DPACKAGE_VERSION=\"0.1.14\" -DPACKAGE_STRING=\"mochad\ 0.1.14\" -DPACKAGE_BUGREPORT=\"mmauka@users.sourceforge.net\" -DPACKAGE_URL=\"\" -DPACKAGE=\"mochad\" -DVERSION=\"0.1.14\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FCNTL_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYSLOG_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FORK=1 -DHAVE_VFORK=1 -DHAVE_WORKING_VFORK=1 -DHAVE_WORKING_FORK=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DHAVE_ALARM=1 -DHAVE_MEMSET=1 -DHAVE_SELECT=1 -DHAVE_SOCKET=1 -DHAVE_STRERROR=1 -DHAVE_STRTOL=1 -DHAVE_STRTOUL=1 -I.     -g -O2 -MT decode.o -MD -MP -MF .deps/decode.Tpo -c -o decode.o decode.c
+mv -f .deps/decode.Tpo .deps/decode.Po
+gcc -DPACKAGE_NAME=\"mochad\" -DPACKAGE_TARNAME=\"mochad\" -DPACKAGE_VERSION=\"0.1.14\" -DPACKAGE_STRING=\"mochad\ 0.1.14\" -DPACKAGE_BUGREPORT=\"mmauka@users.sourceforge.net\" -DPACKAGE_URL=\"\" -DPACKAGE=\"mochad\" -DVERSION=\"0.1.14\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FCNTL_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYSLOG_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FORK=1 -DHAVE_VFORK=1 -DHAVE_WORKING_VFORK=1 -DHAVE_WORKING_FORK=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DHAVE_ALARM=1 -DHAVE_MEMSET=1 -DHAVE_SELECT=1 -DHAVE_SOCKET=1 -DHAVE_STRERROR=1 -DHAVE_STRTOL=1 -DHAVE_STRTOUL=1 -I.     -g -O2 -MT encode.o -MD -MP -MF .deps/encode.Tpo -c -o encode.o encode.c
+mv -f .deps/encode.Tpo .deps/encode.Po
+gcc -DPACKAGE_NAME=\"mochad\" -DPACKAGE_TARNAME=\"mochad\" -DPACKAGE_VERSION=\"0.1.14\" -DPACKAGE_STRING=\"mochad\ 0.1.14\" -DPACKAGE_BUGREPORT=\"mmauka@users.sourceforge.net\" -DPACKAGE_URL=\"\" -DPACKAGE=\"mochad\" -DVERSION=\"0.1.14\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FCNTL_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYSLOG_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FORK=1 -DHAVE_VFORK=1 -DHAVE_WORKING_VFORK=1 -DHAVE_WORKING_FORK=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DHAVE_ALARM=1 -DHAVE_MEMSET=1 -DHAVE_SELECT=1 -DHAVE_SOCKET=1 -DHAVE_STRERROR=1 -DHAVE_STRTOL=1 -DHAVE_STRTOUL=1 -I.     -g -O2 -MT global.o -MD -MP -MF .deps/global.Tpo -c -o global.o global.c
+mv -f .deps/global.Tpo .deps/global.Po
+gcc -DPACKAGE_NAME=\"mochad\" -DPACKAGE_TARNAME=\"mochad\" -DPACKAGE_VERSION=\"0.1.14\" -DPACKAGE_STRING=\"mochad\ 0.1.14\" -DPACKAGE_BUGREPORT=\"mmauka@users.sourceforge.net\" -DPACKAGE_URL=\"\" -DPACKAGE=\"mochad\" -DVERSION=\"0.1.14\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FCNTL_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYSLOG_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FORK=1 -DHAVE_VFORK=1 -DHAVE_WORKING_VFORK=1 -DHAVE_WORKING_FORK=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DHAVE_ALARM=1 -DHAVE_MEMSET=1 -DHAVE_SELECT=1 -DHAVE_SOCKET=1 -DHAVE_STRERROR=1 -DHAVE_STRTOL=1 -DHAVE_STRTOUL=1 -I.     -g -O2 -MT x10state.o -MD -MP -MF .deps/x10state.Tpo -c -o x10state.o x10state.c
+mv -f .deps/x10state.Tpo .deps/x10state.Po
+gcc -DPACKAGE_NAME=\"mochad\" -DPACKAGE_TARNAME=\"mochad\" -DPACKAGE_VERSION=\"0.1.14\" -DPACKAGE_STRING=\"mochad\ 0.1.14\" -DPACKAGE_BUGREPORT=\"mmauka@users.sourceforge.net\" -DPACKAGE_URL=\"\" -DPACKAGE=\"mochad\" -DVERSION=\"0.1.14\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FCNTL_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_SYSLOG_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FORK=1 -DHAVE_VFORK=1 -DHAVE_WORKING_VFORK=1 -DHAVE_WORKING_FORK=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DHAVE_ALARM=1 -DHAVE_MEMSET=1 -DHAVE_SELECT=1 -DHAVE_SOCKET=1 -DHAVE_STRERROR=1 -DHAVE_STRTOL=1 -DHAVE_STRTOUL=1 -I.     -g -O2 -MT x10_write.o -MD -MP -MF .deps/x10_write.Tpo -c -o x10_write.o x10_write.c
+mv -f .deps/x10_write.Tpo .deps/x10_write.Po
+gcc  -g -O2   -o mochad mochad.o decode.o encode.o global.o x10state.o x10_write.o  -lusb-1.0
+[/opt/mochad] $ make install
+make[1]: Entering directory `/share/MD0_DATA/.qpkg/Optware/mochad'
+ /opt/bin/mkdir -p '/usr/local/bin'
+  /usr/bin/install -c mochad '/usr/local/bin'
+make  install-exec-hook
+make[2]: Entering directory `/share/MD0_DATA/.qpkg/Optware/mochad'
+if test -d /etc/udev/rules.d ; then \
+        cp /opt/mochad/udev/91-usb-x10-controllers.rules /etc/udev/rules.d ; \
+fi ;
+if test -d /etc/hotplug.d/usb ; then \
+        cp /opt/mochad/hotplug2/20-usb-x10 /etc/hotplug.d/usb ; \
+        cp /opt/mochad/hotplug2/mochad /etc/init.d ; \
+fi ;
+make[2]: Leaving directory `/share/MD0_DATA/.qpkg/Optware/mochad'
+make[1]: Nothing to be done for `install-data-am'.
+make[1]: Leaving directory `/share/MD0_DATA/.qpkg/Optware/mochad'
+[/opt/mochad] $ ls /share/MD0_DATA/.qpkg/Optware/mochad
+COPYING         Makefile.am     aclocal.m4      build-scripts/  configure*      decode.o        encode.o        hotplug2/       mochad.c        x10_write.h     x10state.o
+ChangeLog       Makefile.in     apps/           cgi/            configure.ac    depcomp*        global.c        install-sh*     mochad.o        x10_write.o
+INSTALL         NEWS            autogen.sh*     config.log      decode.c        encode.c        global.h        missing*        udev/           x10state.c
+Makefile        README          autom4te.cache/ config.status*  decode.h        encode.h        global.o        mochad*         x10_write.c     x10state.h
+[/opt/mochad] $ ls /share/MD0_DATA/.qpkg/Optware/mochad -last
+   8 drwxrwx---   10 admin    administ      4096 Jul 29 00:15 ./
+   8 drwxr-xr-x    2 admin    administ      4096 Jul 29 00:15 .deps/
+  24 -rw-rw----    1 admin    administ     24304 Jul 29 00:15 decode.o
+  28 -rw-rw----    1 admin    administ     28096 Jul 29 00:15 encode.o
+   8 -rw-rw----    1 admin    administ      4936 Jul 29 00:15 global.o
+  92 -rwxrwx--x    1 admin    administ     89045 Jul 29 00:15 mochad*
+   8 -rw-rw----    1 admin    administ      6956 Jul 29 00:15 x10_write.o
+  16 -rw-rw----    1 admin    administ     15056 Jul 29 00:15 x10state.o
+  36 -rw-rw----    1 admin    administ     36352 Jul 29 00:15 mochad.o
+  24 -rw-rw----    1 admin    administ     24569 Jul 28 23:07 config.log
+  24 -rw-rw----    1 admin    administ     22545 Jul 28 23:07 Makefile
+  32 -rwxrwx--x    1 admin    administ     29415 Jul 28 23:07 config.status*
+  24 -rw-rw----    1 admin    administ     22319 Jul 28 23:07 Makefile.in
+   8 drwxr-xr-x   30 admin    administ      4096 Jul 28 23:01 ../
+   8 drwxr-x---    2 admin    administ      4096 Jul 28 22:32 autom4te.cache/
+ 176 -rwxrwx---    1 admin    administ    172231 Jul 28 22:32 configure*
+  24 -rwxr-x---    1 admin    administ     20842 Jul 28 22:32 depcomp*
+  16 -rwxr-x---    1 admin    administ     13997 Jul 28 22:32 install-sh*
+  12 -rwxr-x---    1 admin    administ     10179 Jul 28 22:32 missing*
+   4 -rwxrwx---    1 pafoxp   everyone      1535 Jul 28 22:15 autogen.sh*
+  36 -rw-rw----    1 admin    administ     35135 Jul 28 22:12 aclocal.m4
+   8 drwxr-xr-x    2 admin    administ      4096 Jul 28 22:12 build-scripts/
+   8 drwxrwx---    8 admin    administ      4096 Jul 28 21:01 .git/
+   4 -rw-rw----    1 admin    administ       179 Jul 28 21:01 .gitignore
+  36 -rw-rw----    1 admin    administ     35147 Jul 28 21:01 COPYING
+   4 -rw-rw----    1 admin    administ      3389 Jul 28 21:01 ChangeLog
+   4 -rw-rw----    1 admin    administ        19 Jul 28 21:01 INSTALL
+   4 -rw-rw----    1 admin    administ       727 Jul 28 21:01 Makefile.am
+   4 -rw-rw----    1 admin    administ        19 Jul 28 21:01 NEWS
+   8 -rw-rw----    1 admin    administ      7698 Jul 28 21:01 README
+   8 drwxrwx---    2 admin    administ      4096 Jul 28 21:01 apps/
+   8 drwxrwx---    2 admin    administ      4096 Jul 28 21:01 cgi/
+   4 -rw-rw----    1 admin    administ       829 Jul 28 21:01 configure.ac
+  32 -rw-rw----    1 admin    administ     29214 Jul 28 21:01 decode.c
+   4 -rw-rw----    1 admin    administ      1109 Jul 28 21:01 decode.h
+  28 -rw-rw----    1 admin    administ     25838 Jul 28 21:01 encode.c
+   4 -rw-rw----    1 admin    administ       838 Jul 28 21:01 encode.h
+   4 -rw-rw----    1 admin    administ      1424 Jul 28 21:01 global.c
+   4 -rw-rw----    1 admin    administ      1349 Jul 28 21:01 global.h
+   8 drwxrwx---    2 admin    administ      4096 Jul 28 21:01 hotplug2/
+  28 -rw-rw----    1 admin    administ     24692 Jul 28 21:01 mochad.c
+   8 drwxrwx---    2 admin    administ      4096 Jul 28 21:01 udev/
+   4 -rw-rw----    1 admin    administ      2506 Jul 28 21:01 x10_write.c
+   4 -rw-rw----    1 admin    administ       808 Jul 28 21:01 x10_write.h
+  12 -rw-rw----    1 admin    administ      9846 Jul 28 21:01 x10state.c
+   4 -rw-rw----    1 admin    administ      1266 Jul 28 21:01 x10state.h
+[/opt/mochad] $
+[
