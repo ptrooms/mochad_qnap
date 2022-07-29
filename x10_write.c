@@ -79,6 +79,7 @@ int send_next_x10out(void)
         else {
             Outhead = next_index(Outhead);
             outrec = &Outrecs[Outhead];
+	        dbprintf("NextUsb %d/%d\n", Outhead, Outtail);
             write_usb(outrec->outdata, outrec->outlen);
         }
     }
@@ -94,6 +95,7 @@ int x10_write(unsigned char *buf, size_t buflen)
     else {
         Outbusy = 1;
         PollTimeOut = 2*1000;   /* 2 seconds */
+        dbprintf("WriteUsb %d/%d\n", Outhead, Outtail);
         write_usb(buf, buflen);
     }
     return buflen;

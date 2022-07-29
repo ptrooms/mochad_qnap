@@ -98,10 +98,10 @@ sub select2sock
 
     connectsocket(CM15A1, $ipaddr1, $port1);
     vec($rin, fileno(CM15A1), 1) = 1;
-    connectsocket(CM15A2, $ipaddr2, $port2);
-    vec($rin, fileno(CM15A2), 1) = 1;
-    connectsocket(CM19A1, $ipaddr3, $port3);
-    vec($rin, fileno(CM19A1), 1) = 1;
+ #  connectsocket(CM15A2, $ipaddr2, $port2);
+ #  vec($rin, fileno(CM15A2), 1) = 1;
+ #  connectsocket(CM19A1, $ipaddr3, $port3);
+ #  vec($rin, fileno(CM19A1), 1) = 1;
 
     $ein = $win = $rin;
 
@@ -114,37 +114,38 @@ sub select2sock
                 if (vec($rout, fileno(CM15A1), 1)) {
                     printlines(CM15A1, 1, "biceff");
                 }
-                if (vec($rout, fileno(CM15A2), 1)) {
-                    printlines(CM15A2, 2, "dstar2");
-                }
-                if (vec($rout, fileno(CM19A1), 1)) {
-                    printlines(CM19A1, 3, "dstar4");
-                }
+#               if (vec($rout, fileno(CM15A2), 1)) {
+#                   printlines(CM15A2, 2, "dstar2");
+#               }
+#              if (vec($rout, fileno(CM19A1), 1)) {
+#                   printlines(CM19A1, 3, "dstar4");
+#               }
             }
             if (defined($wout)) {
                 if (vec($wout, fileno(CM15A1), 1)) {
                     print "syswrite biceff\n";
                 }
-                if (vec($wout, fileno(CM15A2), 1)) {
-                    print "syswrite dstar2\n";
-                }
-                if (vec($wout, fileno(CM19A1), 1)) {
-                    print "syswrite dstar4\n";
-                }
+#               if (vec($wout, fileno(CM15A2), 1)) {
+#                   print "syswrite dstar2\n";
+#               }
+#               if (vec($wout, fileno(CM19A1), 1)) {
+#                   print "syswrite dstar4\n";
+#               }
             }
             if (defined($eout)) {
                 if (vec($eout, fileno(CM15A1), 1)) {
                     print "error on biceff\n";
                     last;
                 }
-                if (vec($eout, fileno(CM15A2), 1)) {
-                    print "error on dstar2\n";
-                    last;
-                }
-                if (vec($eout, fileno(CM19A1), 1)) {
-                    print "error on dstar4\n";
-                    last;
-                }
+
+#               if (vec($eout, fileno(CM15A2), 1)) {
+#                   print "error on dstar2\n";
+#                   last;
+#               }
+#               if (vec($eout, fileno(CM19A1), 1)) {
+#                   print "error on dstar4\n";
+#                   last;
+#               }
             }
         }
     }
@@ -152,4 +153,4 @@ sub select2sock
 
 # 192.168.1.254, .23, and .26 are Linux hosts running mochad. 1099 is the 
 # default port number mochad listens on.
-select2sock("192.168.1.254", 1099, "192.168.1.24", 1099, "192.168.1.26", 1099);
+select2sock("192.168.1.8", 1099, "192.168.1.24", 1099, "192.168.1.26", 1099);

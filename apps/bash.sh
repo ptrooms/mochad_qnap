@@ -7,7 +7,7 @@
 #12/20 11:53:58 Rx RFSEC Addr: EF:43:80 Func: Contact_alert_min_low_DS10A
 
 # Connect TCP socket to 192.168.1.254 port 1099 on handle 6.
-exec 6<>/dev/tcp/192.168.1.254/1099
+exec 6<>/dev/tcp/192.1.1.8/1099
 
 # RF devices send the same event multiple times so to avoid multiple
 # PL commands and voice prompts, keep track of the device state.

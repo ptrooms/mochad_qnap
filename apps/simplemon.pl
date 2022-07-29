@@ -20,7 +20,7 @@
 
 # Simple program to get event messages from mochad.
 
-my $Mochadhost = "biceff";
+my $Mochadhost = "localhost";
 my $Mochadport = "1099";
 
 use IO::Socket;
@@ -32,14 +32,22 @@ $mochad = IO::Socket::INET->new(
                       PeerAddr => "$Mochadhost",
                       PeerPort => "$Mochadport",
                   )
-                or die "cannot connect to mochad at biceff:1099";
+                or die "cannot connect to mochad at localhost:1099";
 
 #Sample input line from mochad
-#12/18 20:19:29 Rx RFSEC Addr: C6:1B:00 Func: Motion_alert_MS10A
+# 12/18 20:19:29 Rx RFSEC Addr: C6:1B:00 Func: Motion_alert_MS10A
+
+# 07/28 18:35:53 Rx PL HouseUnit: B3
+# 07/28 18:35:54 Rx PL House: B Func: On
+
 
 while ( $aLine = <$mochad> ) {
+   # $bline = <$mochad> ;
     chomp($aLine);
-    ($junk, $junk, $txrx, $plrf, $junk, $x10addr, $junk, $x10func) = 
-        split(/ /,$aLine);
-    print "$txrx $plrf $x10addr $x10func\n";
+   # ($junk, $junk, $txrx, $plrf, $junk, $x10addr, $junk, $x10func) = split(/ /,$aLine);
+   # 07/28  18:23:40 Rx     PL     House: B         Func:  On
+    ($junk, $junk,   $txrx, $plrf, $junk, $x10addr, $junk, $x10func) = split(/ /,$aLine);
+
+  #  print "$txrx $plrf $x10addr $x10func\n";
+     print "$bline $txrx $plrf $x10addr\n";
 }

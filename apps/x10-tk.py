@@ -26,7 +26,7 @@ import re
 
 # Change MOCHADHOST to "localhost" if this program runs on the same host as 
 # mochad. Otherwise, change to the correct IP.
-MOCHADHOST="192.168.1.254"
+MOCHADHOST="192.168.1.8"
 MOCHADPORT=1099
 # Change default house code
 HOUSECODE="B"
