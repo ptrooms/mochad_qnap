@@ -708,7 +708,7 @@ static int mydaemon(void)
                 /* new client connection */
                 clilen = sizeof(cliaddr);
                 clifd  = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
-                dbprintf("accept() %d/%d\n", clifd, errno);
+                dbprintf("accept() %d/%d\n\n", clifd, errno);
                 r = add_client(clifd);
                 if (--nready <= 0) continue;
             }
