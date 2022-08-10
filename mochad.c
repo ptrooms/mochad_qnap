@@ -80,9 +80,8 @@ static struct libusb_transfer *IntrIn_transfer = NULL;
 static unsigned char IntrOutBuf[8];
 static unsigned char IntrInBuf[8];
 
-int raw_data = 0;
-
-int doWriteLogFile = 0;  
+int raw_data = 0;			// print data for mrhouse
+int doWriteLogFile = 0;  	// wriote a log file
 
 /*
  *  Prepare and create a simple logfile to register X10 codes
@@ -1040,7 +1039,7 @@ static void printcopy(void)
 int main(int argc, char *argv[])
 {
     int rc, i;
-    int foreground=0;
+    // int foreground=0;
 
     /* Initialize logging */
     openlog(DAEMON_NAME, LOG_PID, LOG_LOCAL5);

@@ -17,6 +17,8 @@
  * along with mochad.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+int foreground; 		// running on console 
+
 struct SecEventRec {
     unsigned char funct;
     const char *name;

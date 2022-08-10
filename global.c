@@ -22,13 +22,13 @@
 #include <stdarg.h>
 #include "global.h"
 
+int foreground = 0;			// running on console 
 int Cm19a = 0;
 
 /* 1 bit per house code, 1=RF to PL, 0=off, default all house codes on */
 unsigned short RfToPl16 = 0xFFFF;
 
 unsigned short RfToRf16 = 0;
-
 
 /* #define dbprintf(fmt,...) fprintf(stderr, "%s:%d:" fmt, __FILE__,__LINE__,__VA_ARGS__) */
 #define dbprintf(fmt, ...) _dbprintf(fmt, __FILE__,__LINE__, ## __VA_ARGS__)
@@ -38,11 +38,29 @@ int _dbprintf(const char *fmt, ...)
     char buf[1024];
     char fmtbig[1024];
     int buflen;
-
-    va_start(args,fmt);
-    strcpy(fmtbig, "%s:%d:");
+/*
+ * prefix message with timestamp
+ * see form format: [https://en.cppreference.com/w/cpp/chrono/c/strftime]
+ */
+    char *aLine;
+    int len;
+    time_t tm;
+    aLine = buf;
+    tm = time(NULL);
+    len = strftime(aLine, sizeof(buf), "%y/%m/%d %T ", localtime(&tm));
+    strcpy(fmtbig, aLine);
+	
+    va_start(args,fmt);			// enables access to the variable arguments
+    strcat(fmtbig, "%s:%d:");
     strcat(fmtbig, fmt);
     buflen = vsprintf(buf, fmtbig, args);
-    va_end(args);
-    return fprintf(stderr, buf);
+    va_end(args);				// cleanup va_start
+	return fprintf(	(foreground > 0 ? stdout : stderr), buf);
+    // return fprintf(stderr, buf);
 }
+
+
+
+
+
+

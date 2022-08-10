@@ -311,8 +311,11 @@ void hua_show(int fd)
             sockprintf(fd, buf, strlen(buf));
         }
     }
-    
-    sockprintf(fd, "Device status\n");
+
+	/*
+	 * 10aug22 added RfToRf & RfToPl status
+     */
+    sockprintf(fd, "Device status RfToPl=%04X  RfToRf=%04X\n", RfToPl16, RfToRf16);
     for (h = 0; h < 16; h++) {
         labeldone = 0;
         buf[0] = '\0';

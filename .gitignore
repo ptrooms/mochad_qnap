@@ -1,11 +1,13 @@
 *~
 *.swp
+*.tmp
 tags
 *.out
 *.o
 *.bak
 *.log
 .deps/
+tmp/
 autom4te.cache/
 autoscan.log
 config.log
