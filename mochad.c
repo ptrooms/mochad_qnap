@@ -44,6 +44,7 @@
 
 /* Multiple On-line Controllers Home Automation Daemon */
 #define DAEMON_NAME "mochad"
+#define MYLOG_NAME  "/var/log/mochad/mochad.log"
 
 /**** socket ****/
 
@@ -66,17 +67,62 @@ static size_t NClients;     /* # of valid entries in Clientsocks */
 static size_t NxmlClients;  /* # of valid entries in Clientxmlsocks */
 static size_t Nor20Clients; /* # of valid entries in Clientor20socks */
 
+struct client *clients = NULL;
+
 /**** USB usblib 1.0 ****/
 
 #include <libusb-1.0/libusb.h>
-#define INTR_EP_1_IN    (0x81)
-#define INTR_EP_2_OUT   (0x02)
+uint8_t InEndpoint, OutEndpoint;
 
 static struct libusb_device_handle *Devh = NULL;
 static struct libusb_transfer *IntrOut_transfer = NULL;
 static struct libusb_transfer *IntrIn_transfer = NULL;
 static unsigned char IntrOutBuf[8];
 static unsigned char IntrInBuf[8];
+
+int raw_data = 0;
+
+int doWriteLogFile = 0;  
+
+/*
+ *  Prepare and create a simple logfile to register X10 codes
+ */
+void WriteLogFile(const char* szString)
+{
+    // #include "stdio.h"
+    if (doWriteLogFile < 1) return;
+
+    char buf[1024];
+    char *aLine;
+    int len;
+    time_t tm;
+    int i;
+
+    aLine = buf;
+    tm = time(NULL);
+    len = strftime(aLine, sizeof(buf), "%y/%m/%d %T ", localtime(&tm));
+	/*
+		va_start(args,fmt);
+		buflen = vsnprintf(aLine+len, sizeof(buf)-len, fmt, args);
+		va_end(args);
+		buflen += len;
+		if (fd != -1) {
+		    if (xmlclient(fd) && (aLine[buflen-1] == '\n')) {
+		        aLine[buflen-1] = '\0';
+		    }
+		    return send(fd, aLine, buflen, MSG_NOSIGNAL);
+		}
+	*/
+
+	// char fileName[60]; fileName[0] = '\0';
+	// strcat (fileName, PACKAGE_NAME); strcat (fileName, ".log");
+    // FILE* pFile = fopen(fileName, "a");
+    FILE* pFile = fopen(MYLOG_NAME, "a");
+    fprintf(pFile, "%s %s\n", aLine,szString);
+    fclose(pFile);
+
+}
+
 
 /*
  * Like printf but print to socket without date/time stamp.
@@ -180,6 +226,86 @@ int sockprintf(int fd, const char *fmt, ...)
     return buflen;
 }
 
+/*
+ * sockprintf alternative for JSON
+ */
+int sockprintf_json(int fd, const char *command, const char *fmt, ...)
+{
+    va_list args;
+    char fmt2[1024];
+    int fmt2len;
+    char dtbuf[80];
+    char buf[1024];
+    int buflen;
+    time_t tm;
+
+    time (&tm);
+    strftime(dtbuf, sizeof(dtbuf), "%FT%T", localtime(&tm));
+
+    fmt2len = snprintf(fmt2, sizeof(fmt2), "{ dt: \"%s\", type: \"%s\", data: %s }\n", dtbuf, command, fmt);
+    if(fmt2len >= sizeof(fmt2)) return -1;
+    fmt2[fmt2len + 1] = '\0';
+
+    va_start(args,fmt);
+    buflen = vsnprintf(buf, sizeof(buf), fmt2, args);
+    va_end(args);
+    if(buflen >= sizeof(buf)) return -1;
+    buf[buflen + 1] = '\0';
+
+    send(fd, buf, strlen(buf), MSG_NOSIGNAL);
+    return 0;
+}
+
+// get client from fd
+struct client *client_find(int fd)
+{
+    struct client *s;
+    HASH_FIND_INT(clients, &fd, s);
+    return s; // NULL if not found
+}
+
+// add client by fd
+void client_add(int fd)
+{
+    struct client *s;
+    struct sockaddr_in locl;
+    socklen_t locllen;
+
+    s = malloc(sizeof(struct client));
+
+    s->fd   = fd;
+    s->ofmt = raw_data == 1 ? OFMT_NORMALRAW : OFMT_NORMAL;
+
+    // determine input format by source port
+    locllen = sizeof(locl);
+    if (getsockname(fd, (struct sockaddr *)&locl, &locllen) < 0) {
+        dbprintf("getsockname -1/%d\n", errno);
+        return;
+    }
+    dbprintf("locl port %d\n", ntohs(locl.sin_port));
+    
+    switch(ntohs(locl.sin_port)) { 
+        case SERVER_PORT: { 
+            s->ifmt = IFMT_NORMAL; 
+            break;
+        }
+        case (SERVER_PORT + 1): { 
+            s->ifmt = IFMT_XML; 
+            break;
+        }
+        case (SERVER_PORT + 2): { 
+            s->ifmt = IFMT_OPEN_REMOTE; 
+            break;
+        }
+	default: { 
+            s->ifmt = IFMT_NORMAL; 
+	} 
+    }
+
+    HASH_ADD_INT(clients, fd, s);
+}
+
+
 static void _hexdump(void *p, size_t len, char *outbuf, size_t outlen)
 {
     unsigned char *ptr = (unsigned char*) p;
@@ -190,19 +316,51 @@ static void _hexdump(void *p, size_t len, char *outbuf, size_t outlen)
         l = outlen / 3;
     else
         l = len;
+
     while (l--) {
         sprintf(outbuf, "%02X ", *ptr++);
         outbuf += 3;
     }
 }
 
+
+
+static void _hexdump2(void *p, size_t len, char *outbuf, size_t outlen)
+{
+    unsigned char *ptr = (unsigned char*) p;
+    size_t l;
+
+    if (len == 0) return;
+    if (len > (outlen / 3))
+        l = outlen / 3;
+    else
+        l = len;
+
+    while (l--) {
+        sprintf(outbuf, "%02X-", *ptr++);
+        outbuf += 3;
+    }
+}
+
+
 void hexdump(void *p, size_t len)
 {
     char buf[(3*100)+1];
 
     _hexdump(p, len, buf, sizeof(buf));
-    puts(buf);
+    puts(buf);								// Write string to stdout with /n
+	WriteLogFile(buf);
 }
+
+void hexdump_stderr(void *p, size_t len)
+{
+    char buf[(3*100)+1];
+
+    _hexdump2(p, len, buf, sizeof(buf));
+	fprintf(stdout, buf);
+	// fprintf(stderr, buf);
+}
+
 
 void sockhexdump(int fd, void *p, size_t len)
 {
@@ -240,6 +398,7 @@ static int add_client(int fd)
 {
     int i;
 
+    client_add(fd);
     dbprintf("add_client(%d)\n", fd);
     for (i = 0; i < MAXCLISOCKETS; i++) {
         if (Clientsocks[i].fd == -1) {
@@ -363,15 +522,16 @@ struct binarydata {
 
 static const struct binarydata initcm15abinary[] = {
 #if 0
-    {8, {0x9b,0x00,0x5b,0x09,0x50,0x90,0x60,0x02}},
-    {8, {0x9b,0x00,0x5b,0x09,0x50,0x90,0x60,0x02}},
-    {8, {0xbb,0x00,0x00,0x05,0x00,0x14,0x20,0x28}},
-    {1, {0x8b}},
-    {3, {0xdb,0x1f,0xf0}},
-    {3, {0xdb,0x20,0x00}},
-    {3, {0xab,0xde,0xaf}},
-    {1, {0x8b}},
-    {3, {0xab,0x00,0x00}},
+    {8, {0x9b,0x00,0x5b,0x09,0x50,0x90,0x60,0x02}},  	// Set Clock (0x9B) Cm15a
+    {8, {0x9b,0x00,0x5b,0x09,0x50,0x90,0x60,0x02}},     // and again
+
+    {8, {0xbb,0x00,0x00,0x05,0x00,0x14,0x20,0x28}},     // memory write
+    {1, {0x8b}},										// status
+    {3, {0xdb,0x1f,0xf0}},								// memory read
+    {3, {0xdb,0x20,0x00}},								// memory read
+    {3, {0xab,0xde,0xaf}},                              // restart?? de af
+    {1, {0x8b}},										// status
+    {3, {0xab,0x00,0x00}},                              // restart?? 00 00
 #endif
     {0}
 };
@@ -398,6 +558,9 @@ static void initcm1Xa(const struct binarydata *p)
     }
 }
 
+/* Find CM15A or CM19A. The EU versions (CM15Pro and CM19Pro) have the same
+ * vendor and product IDs, respectively.
+ */
 static int find_cm15a(struct libusb_device_handle **devhptr)
 {
     int r;
@@ -417,7 +580,7 @@ static int find_cm15a(struct libusb_device_handle **devhptr)
         syslog(LOG_NOTICE, (Cm19a) ? "Found CM19A" : "Found CM15A");
         return 0;
     }
-    syslog(LOG_EMERG, "usb_claim_interface failed %d", r);
+    syslog(LOG_EMERG, "usb_claim_interface failed %s", libusb_error_name(r));
     r = libusb_kernel_driver_active(*devhptr, 0);
     if (r < 0) {
         syslog(LOG_EMERG, "Kernel driver check failed %d", r);
@@ -436,6 +599,50 @@ static int find_cm15a(struct libusb_device_handle **devhptr)
         return -EIO;
     }
     syslog(LOG_NOTICE, (Cm19a) ? "Found CM19A" : "Found CM15A");
+    return 0;
+}
+
+/* Find the in and out endpoint address in the device descriptors.
+ * This is required by newer CM19A that have changed endpoint addresses.
+ */
+static int get_endpoint_address(libusb_device_handle *devh, uint8_t *inendpt, uint8_t *outendpt)
+{
+    int r;
+    struct libusb_config_descriptor *config;
+    const struct libusb_interface *interfaces;
+    const struct libusb_interface_descriptor *interface_desc;
+    const struct libusb_endpoint_descriptor *endpoint_desc;
+    struct libusb_device *uDevice;
+    struct libusb_device_descriptor desc;
+    int i, j, k;
+
+    uDevice = libusb_get_device(devh);
+    if (!uDevice) return -1;
+
+    r = libusb_get_device_descriptor(uDevice, &desc);
+    if (r < 0) return r;
+
+    r = libusb_get_active_config_descriptor(uDevice, &config);
+    if (r < 0) return r;
+    interfaces = config->interface;
+    for (i = 0; i < config->bNumInterfaces; i++) {
+        interface_desc = interfaces->altsetting;
+        for (j = 0; j < interfaces->num_altsetting; j++) {
+            endpoint_desc = interface_desc->endpoint;
+            for (k = 0; k < interface_desc->bNumEndpoints; k++) {
+                if (endpoint_desc->bEndpointAddress & 0x80) {
+                    *inendpt = endpoint_desc->bEndpointAddress;
+                }
+                else {
+                    *outendpt = endpoint_desc->bEndpointAddress;
+                }
+                endpoint_desc++;
+            }
+            interface_desc++;
+        }
+        interfaces++;
+    }
+    libusb_free_config_descriptor(config);
     return 0;
 }
 
@@ -502,7 +709,7 @@ static int alloc_transfers(void)
     IntrIn_transfer = libusb_alloc_transfer(0);
     if (!IntrIn_transfer)
         return -ENOMEM;
-    libusb_fill_interrupt_transfer(IntrIn_transfer, Devh, INTR_EP_1_IN, 
+    libusb_fill_interrupt_transfer(IntrIn_transfer, Devh, InEndpoint, 
             IntrInBuf, sizeof(IntrInBuf), IntrIn_cb, NULL, 0);
 
     IntrOut_transfer = libusb_alloc_transfer(0);
@@ -516,9 +723,9 @@ int write_usb(unsigned char *buf, size_t len)
     int r, i;
 
     dbprintf("usb len %lu ", (unsigned long)len);
-    hexdump(buf, len);
+    hexdump(buf, len);								// print process code on console
     memcpy(IntrOutBuf, buf, len);
-    libusb_fill_interrupt_transfer(IntrOut_transfer, Devh, INTR_EP_2_OUT, 
+    libusb_fill_interrupt_transfer(IntrOut_transfer, Devh, OutEndpoint, 
             IntrOutBuf, len, IntrOut_cb, NULL, 0);
     r = libusb_submit_transfer(IntrOut_transfer);
     if (r < 0) {
@@ -581,6 +788,15 @@ static int mydaemon(void)
         dbprintf("Could not find/open CM15A/CM19A %d\n", r);
         goto out;
     }
+
+    r = get_endpoint_address(Devh, &InEndpoint, &OutEndpoint);
+    if (r < 0) {
+        syslog(LOG_EMERG, "Could not find endpoints %d", r);
+        dbprintf("Could not find endpoints %d\n", r);
+        goto out_deinit;
+    }
+    syslog(LOG_NOTICE, "In endpoint 0x%02X, Out endpoint 0x%02X",
+            InEndpoint, OutEndpoint);
 
     r = do_init();
     if (r < 0)
@@ -708,7 +924,7 @@ static int mydaemon(void)
                 /* new client connection */
                 clilen = sizeof(cliaddr);
                 clifd  = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
-                dbprintf("accept() %d/%d\n\n", clifd, errno);
+                dbprintf("accept() %d/%d\n", clifd, errno);
                 r = add_client(clifd);
                 if (--nready <= 0) continue;
             }
@@ -748,6 +964,7 @@ static int mydaemon(void)
                             del_client(clifd);
                         }
                         else {
+							// dbprintf("\n %s: usbread %s len=%d)\n\n", __func__, buf, (size_t)bytesIn)  ;
                             cm15a_encode(clifd, buf, (size_t)bytesIn);
                         }
                         if (--nready <= 0) break;
@@ -792,9 +1009,24 @@ out:
     return r >= 0 ? r : -r;
 }
 
+static void printhelp(void)
+{
+    printf(PACKAGE_NAME " Program options:\n");
+    printf("Use for interfacing X10-usb with network-sockets *:1099.");
+    printf("\n");
+    printf("Options:\n");
+    printf("  -l  create "MYLOG_NAME" containing timestamps and x10 codes.\n");
+    printf("  -d  run in foreground, full debug mode\n");
+    printf("  --raw  output for parsing by misterhouse.\n");
+    printf("  --version program version.\n");
+    printf("\n");
+	printf("   Use \"?\" in clientmode for supported commands\n");
+    fflush(NULL);
+}
+
 static void printcopy(void)
 {
-    printf("Copyright (C) 2010-2011 Brian Uechi.\n");
+    printf("Copyright (C) 2010-2012 Brian Uechi, 2022 Peter Ooms.\n");
     printf("\n");
     printf("This program comes with NO WARRANTY.\n");
     printf("You may redistribute copies of this program\n");
@@ -805,7 +1037,6 @@ static void printcopy(void)
 
 // This affects whether decode.c will show raw frame data for debugging RF connectivity
 // as well as providing raw data for parsing by users like misterhouse's X10_CMxx module.
-int raw_data = 0;
 int main(int argc, char *argv[])
 {
     int rc, i;
@@ -819,8 +1050,17 @@ int main(int argc, char *argv[])
     for (i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-d") == 0)
             foreground = 1;
+
+        else if (strcmp(argv[i], "-l") == 0) {		// simple logfile PtrO 10aug22
+            doWriteLogFile = 1;	
+			WriteLogFile("Program " PACKAGE_NAME " version " PACKAGE_STRING " initialised");
+        }
         else if (strcmp(argv[i], "--raw-data") == 0)
             raw_data = 1;
+        else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-?") == 0 ) {
+			printhelp();	
+            exit(0);
+        }
         else if (strcmp(argv[i], "--version") == 0) {
             printf("%s\n", PACKAGE_STRING);
             printcopy();

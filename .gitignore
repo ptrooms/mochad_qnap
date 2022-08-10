@@ -3,6 +3,8 @@
 tags
 *.out
 *.o
+*.bak
+*.log
 .deps/
 autom4te.cache/
 autoscan.log

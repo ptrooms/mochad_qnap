@@ -79,7 +79,11 @@ int send_next_x10out(void)
         else {
             Outhead = next_index(Outhead);
             outrec = &Outrecs[Outhead];
-	        dbprintf("NextUsb %d/%d\n", Outhead, Outtail);
+	        dbprintf("nextUsb %d/%d\n", Outhead, Outtail);
+			dbprintf("%s next_USB %u bytes: ", __func__, outrec->outlen);
+			hexdump_stderr(outrec->outdata, outrec->outlen);
+			dbprintf(" .\n");
+
             write_usb(outrec->outdata, outrec->outlen);
         }
     }
@@ -88,6 +92,12 @@ int send_next_x10out(void)
 
 int x10_write(unsigned char *buf, size_t buflen)
 {
+
+	// 04 46 06 42 = O1 on
+	// 04 46 06 43 = O1 off
+    dbprintf("\n   %s write %u bytes: ", __func__, buflen);
+   	hexdump_stderr(buf, buflen);
+	dbprintf("\n");
     dbprintf("Outbusy=%d\n", Outbusy);
     if (Outbusy) {
         add_x10out(buf, buflen);
@@ -96,6 +106,9 @@ int x10_write(unsigned char *buf, size_t buflen)
         Outbusy = 1;
         PollTimeOut = 2*1000;   /* 2 seconds */
         dbprintf("WriteUsb %d/%d\n", Outhead, Outtail);
+	    dbprintf("%s write_USB %u bytes: ", __func__, buflen);
+    	hexdump_stderr(buf, buflen);
+		dbprintf("\n");
         write_usb(buf, buflen);
     }
     return buflen;

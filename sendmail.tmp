@@ -1,0 +1,16 @@
+Subject:mochad started normally. - mochad /share/homes/admin/mochad [2022-08-09 23:08:05]
+To: ptr.ooms@gmail.com
+From: qnap.ooms@pafo2.nl
+
+20:25:25.938150 mochad.c:815:bind() 0/2
+20:25:25.938269 mochad.c:817:listen() 0/2
+20:25:25.938401 mochad.c:428:copy_clients
+20:25:25.938523 mochad.c:440:copy_clients 0
+20:25:44.077824 mochad.c:861:accept() 10/2
+20:25:44.077961 mochad.c:242:locl port 1099
+20:25:44.078025 mochad.c:336:add_client(10)
+20:25:44.078083 mochad.c:343:add_client: i 0 NClients 1
+20:25:44.078139 mochad.c:428:copy_clients
+20:25:44.078195 mochad.c:440:copy_clients 1
+
+

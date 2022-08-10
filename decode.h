@@ -19,6 +19,8 @@
 
 extern int raw_data;
 
+extern char log_file_name;
+
 const char *findSecEventName(unsigned char secev);
 
 const char *findSecRemoteKeyName(unsigned char secev);

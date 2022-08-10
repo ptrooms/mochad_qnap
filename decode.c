@@ -214,8 +214,9 @@ void cm15a_decode_plc(int fd, unsigned char *buf, size_t len)
     int codelen;
     int dims;
 
-    dbprintf("%s(%d,%u) ", __func__, fd, len);
-    hexdump(buf, len);
+    dbprintf("%s(%d,%u) hexdumpPL:", __func__, fd, len);
+    hexdump_stderr(buf, len);
+	dbprintf("\n");
     // new event
     // ev->evint = EV_RX_PLC;
     if (len < 4) {
@@ -264,7 +265,7 @@ void cm15a_decode_plc(int fd, unsigned char *buf, size_t len)
                     hua_func_all_on(housechar-'A');
                     break;
                 case 2:
-                case 13: /* Status On     */
+                case 13: /* Status On     , get house */
                     hua_func_on(housechar-'A');
                     dbprintf("%s case 2 break\n", __func__);
                     break;
@@ -581,6 +582,25 @@ static int repeatRF(int fd, unsigned char *buf, size_t len)
     return retval;
 }
 
+static int repeatPL(int fd, unsigned char *buf, size_t len)
+{
+    unsigned char saved = *buf;
+    int retval = 0;
+
+    if (RfToRf16) {
+        sockprintf(fd, "RfToPL repeat\n");
+        // Change Rx code to Tx code
+        *buf = 0x5D;
+        if (Cm19a)
+            retval = x10_write(buf+1, len-1);
+        else
+            retval = x10_write(buf, len);
+        *buf = saved;
+    }
+    return retval;
+}
+
+
 typedef uint64_t timems_t;
 
 /* Get system time in milliseconds */
@@ -710,8 +730,11 @@ void cm15a_decode_rf(int fd, unsigned char *buf, unsigned int len)
     char cmdbuf[80];
     const char *commandp;
 
-    dbprintf("%s(%d,%u) ", __func__, fd, len);
-    hexdump(buf, len);
+
+    dbprintf("%s(%d,%u) hexdumpRF:", __func__, fd, len);
+    hexdump_stderr(buf, len);
+	dbprintf("\n");
+
     /* Skip over extra 0x5Ds */
     while ((buf[1] == 0x5D) && len) {
         dbprintf("Skipping extra 0x5D\n");
@@ -782,14 +805,18 @@ void cm15a_decode_rf(int fd, unsigned char *buf, unsigned int len)
                     return;
                 }
                 if (dup_filter(buf, len)) return;
+
                 unitint = hufc_decode(buf[2], buf[4], &housechar, &funcint);
-                /* dbprintf("h %c func %d\n", housechar, funcint); */
+                dbprintf("h %c func %d\n", housechar, funcint);
+
                 if (funcint > 1) {  // Dim or Bright
                     sockprintf(fd, "%cx RF House: %c Func: %s\n", 
                             (buf[0] == 0x5d) ? 'R' : 'T',
                             housechar, Funcname[funcint+2]);
                     repeatRF(fd, buf, len);
+                    // repeatPL(fd, buf, len);
                     if (!Cm19a && (RfToPl16 & (1 << (housechar - 'A')))) {
+				        dbprintf("Repeating RfToPl\n");
                         rc = snprintf(cmdbuf, sizeof(cmdbuf), "PL %c %s",
                                 housechar, Funcname[funcint+2]);
                         if (rc > 0)
@@ -806,15 +833,22 @@ void cm15a_decode_rf(int fd, unsigned char *buf, unsigned int len)
                         hua_func_off(housechar-'A');
                     else
                         hua_func_on(housechar-'A');
+
                     sockprintf(fd, "%cx RF HouseUnit: %c%d Func: %s\n", 
                             (buf[0] == 0x5d) ? 'R' : 'T',
                             housechar, unitint, Funcname[funcint+2]);
+				    dbprintf("RepeatRf\n");
                     repeatRF(fd, buf, len);
+	        /*    dbprintf("repeatPL2\n");
+                    repeatPL(fd, buf, len); */
                     if (!Cm19a && (RfToPl16 & (1 << (housechar - 'A')))) {
+				        dbprintf("Repeating RfToPl\n");
                         rc = snprintf(cmdbuf, sizeof(cmdbuf), "PL %c%d %s",
                                 housechar, unitint, Funcname[funcint+2]);
-                        if (rc > 0)
-                            processcommandline(fd, cmdbuf);
+                        if (rc > 0) {
+			    			dbprintf("%s(%d,%u) repeat as command %s\n", __func__, fd, rc, cmdbuf);  //here
+                            processcommandline(fd, cmdbuf);			// will never reach as fd = -1
+						}
                         else {
                             sockprintf(fd, "cmdbuf too short\n");
                             sockhexdump(fd, buf, len);
@@ -851,14 +885,14 @@ void cm15a_decode_rf(int fd, unsigned char *buf, unsigned int len)
                     break;
             }
             break;
-#if 0
-        case 0x5A:  // CM15A internal RF to PL repeater is on so disable it
+       case 0x5A:  // CM15A internal RF to PL repeater is on so disable it
             dbprintf("Disabling internal RF to PL repeater\n");
+#if 0
             x10_write((unsigned char *)"\xdb\x1f\xf0", 3);
             x10_write((unsigned char *)"\xfb\x20\x00\x02", 4);
             x10_write((unsigned char *)"\xbb\x00\x00\x05\x00\x14\x20\x28", 8);
-            break;
 #endif
+            break;
         case 0x24:  // ????
         case 0x28:  // ????
             // 5D 24 EE 11 8E 79 40
@@ -877,6 +911,7 @@ void cm15a_decode(int fd, unsigned char *buf, unsigned int len)
     unsigned char *p = buf;
 
     if (len < 4) return;
+
     if (Cm19a) {
         /* Add 0x5d to front so USB packet from the CM19A looks just like
          * a USB packet from the CM15A. Call the same decode function.
@@ -889,8 +924,12 @@ void cm15a_decode(int fd, unsigned char *buf, unsigned int len)
     }
 
     if (raw_data) {
-	mh_sockhexdump(fd, p, len);
+		mh_sockhexdump(fd, p, len);
     }
+
+    dbprintf("%s(%d,%u) hexdumpXX:", __func__, fd, len);
+    hexdump_stderr(p, len);
+	dbprintf("\n");
 
     switch (*p) 
     {

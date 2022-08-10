@@ -409,7 +409,6 @@ static int pl_tx_extended_code_1(int fd, int house, int unit, int command,
         int subcmd, int param)
 {
     unsigned char buf[7];
-    int dims;
     size_t nbuf;
     unsigned char *xmitptr;
 
@@ -426,10 +425,10 @@ static int pl_tx_extended_code_1(int fd, int house, int unit, int command,
     buf[6] = ((command & 0x0F) << 4) | (subcmd & 0x0F);
     xmitptr = &buf[2];
     cm15a_decode_plc(-1, buf, nbuf);
-    dbprintf("%d:", nbuf); hexdump(buf, nbuf);
+    dbprintf("%d:", nbuf); hexdump_stderr(buf, nbuf);
 
     /* Transmit only requires last 5 bytes */
-    hexdump(xmitptr, 5);
+    hexdump_stderr(xmitptr, 5);
     return x10_write(xmitptr, 5);
 }
 
@@ -454,7 +453,7 @@ static int pl_tx_housefunc(int fd, int house, int func, int param)
             buf[4] = x10housecode[house] << 4 | func;
             xmitptr = &buf[2];
             cm15a_decode_plc(-1, buf, nbuf);
-            dbprintf("%d:", nbuf); hexdump(buf, nbuf);
+            dbprintf("%d:", nbuf); hexdump_stderr(buf, nbuf);
 
             /* Transmit using the 0x06 prefix just like AHP */
             /* The remaining two bytes are reversed */
@@ -462,7 +461,7 @@ static int pl_tx_housefunc(int fd, int house, int func, int param)
             *xmitptr = *(xmitptr+1);
             xmitptr++;
             *xmitptr = 0x06 | dims;
-            hexdump(xmitptr-2, 3);
+            hexdump_stderr(xmitptr-2, 3);
             return x10_write(xmitptr-2, 3);
         case FUNC_EXTENDED_DIM:
             buf[1] = 0x05;
@@ -475,10 +474,10 @@ static int pl_tx_housefunc(int fd, int house, int func, int param)
             buf[6] = 0x31;  /* Dim/Bright */
             xmitptr = &buf[2];
             cm15a_decode_plc(-1, buf, nbuf);
-            dbprintf("%d:", nbuf); hexdump(buf, nbuf);
+            dbprintf("%d:", nbuf); hexdump_stderr(buf, nbuf);
 
             /* Transmit only requires last 5 bytes */
-            hexdump(xmitptr, 5);
+            hexdump_stderr(xmitptr, 5);
             return x10_write(xmitptr, 5);
         default:
             buf[1] = 0x02;
@@ -487,11 +486,11 @@ static int pl_tx_housefunc(int fd, int house, int func, int param)
             buf[3] = x10housecode[house] << 4 | func;
             xmitptr = &buf[2];
             cm15a_decode_plc(-1, buf, nbuf);
-            dbprintf("%d:", nbuf); hexdump(buf, nbuf);
+            dbprintf("%d:", nbuf); hexdump_stderr(buf, nbuf);
 
             /* Transmit only requires last 2 bytes */
             *xmitptr = 0x06;
-            hexdump(xmitptr, 2);
+            hexdump_stderr(xmitptr, 2);
             return x10_write(xmitptr, 2);
     }
 }
@@ -567,11 +566,14 @@ static int rf_tx_houseunitfunc(int fd, int house, int unit, int func)
     unit2 = unit & 0x02;
     unit1 = unit & 0x01;
 
+	// hexdump_stderr(buf, 6); 	dbprintf("=fixI-6bytes\n");
+
     buf[0] = 0xeb;
     buf[1] = 0x20;
     buf[2] = (x10housecoderf[house] << 4) | (unit8 >> 1);
 
     buf[4] = 0;
+
     switch (func) {
         /* X10 standard RF */
         case FUNC_OFF:
@@ -596,6 +598,9 @@ static int rf_tx_houseunitfunc(int fd, int house, int unit, int func)
     buf[5] = ~buf[4];
 
     cm15a_decode_rf(-1, buf, sizeof(buf));
+	// dbprintf("%d:", nbuf); hexdump_stderr(buf, nbuf);
+	hexdump_stderr(buf, 6); 	dbprintf("=fixO-6bytes\n");
+
     if (Cm19a)
         return x10_write(buf+1, sizeof(buf)-1);
     else
@@ -623,8 +628,16 @@ int processcommandline(int fd, char *aLine)
     unsigned long rfaddr;
     int rf8bitaddr, rfcamkey;
 
+    int changed = 0;
+
+    dbprintf("\n\t %s(%d) command:%s \n", __func__, fd, aLine);
+
+    struct client *s = client_find(fd);
+
+    // if(! s) return -1;			// -1 if command is repeated by on reques Pl/Rf|ToRf
+
     strupper(aLine);
-    dbprintf("%lu:%s\n", (unsigned long)strlen(aLine), aLine);
+    dbprintf("--> %lu bytes= %s.\n", (unsigned long)strlen(aLine), aLine);
     if (strcmp(aLine, "<POLICY-FILE-REQUEST/>") == 0) {
         /* Yes, this sends the '\0' terminator which is required. */
         send(fd, DOMAINPOLICY, sizeof(DOMAINPOLICY), MSG_NOSIGNAL);
@@ -632,7 +645,63 @@ int processcommandline(int fd, char *aLine)
     }
     command = strtok(aLine, " ");
     if (command) {
-        if (strcmp(command, "PL") == 0) {
+        // VER (get version)
+        if (strcmp(command, "VER") == 0) {
+            if (s->ofmt == OFMT_JSON) {
+                sockprintf_json(fd, command, "[ \"%s\", \"%s\" ]", PACKAGE_NAME, PACKAGE_VERSION);
+            }
+            else if (s->ofmt == OFMT_NORMAL || s->ofmt == OFMT_NORMALRAW) { 
+                sockprintf(fd, "Version: %s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
+            }
+            // OFMT_NONE is skipped
+            return 0;
+        }
+        // OF (get and set output format)
+       else if ( strcmp(command, "?") == 0 || strcmp(command, "HELP") == 0 ) {
+            sockprintf(fd, "Ver|OF( Json|Normal)|(Pl|Rf) hu (On|Off)\n\t|Rf(sec|cam)|(Int|Ext|)\n\t|RfToPl|RfToRf|St|Getstatus(|Sec)|PT\n");
+       }
+        else if (strcmp(command, "OF") == 0) {
+            arg1 = strtok(NULL, " ");
+            changed = 0;
+            if (arg1) {
+                if(strcmp(arg1, "NONE") == 0) { 
+                    if(s->ofmt != OFMT_NONE) { 
+                        s->ofmt = OFMT_NONE;
+                        changed = 1;
+                    }
+                }
+                else if(strcmp(arg1, "NORMAL") == 0) { 
+                    if(s->ofmt != OFMT_NORMAL) { 
+                        s->ofmt = OFMT_NORMAL;
+                        changed = 1;
+                    }
+                }
+                else if(strcmp(arg1, "NORMALRAW") == 0) { 
+                    if(s->ofmt != OFMT_NORMALRAW) { 
+                        s->ofmt = OFMT_NORMALRAW;
+                        changed = 1;
+                    }
+                }
+                else if(strcmp(arg1, "JSON") == 0) { 
+                    if(s->ofmt != OFMT_JSON) { 
+                        s->ofmt = OFMT_JSON;
+                        changed = 1;
+                    }
+                }
+                else { 
+                   sockprintf(fd, "Unknown format '%s'\n", arg1);
+                   return -1;
+                }
+            }
+            if (s->ofmt == OFMT_JSON) {
+                sockprintf_json(fd, command, "{ format: \"JSON\", changed: %s", changed ? "true" : "false");
+            }
+            else if (s->ofmt == OFMT_NORMAL || s->ofmt == OFMT_NORMALRAW) { 
+                sockprintf(fd, "Output format is \"NORMAL%s\" (changed: %s)\n", (s->ofmt == OFMT_NORMALRAW ? "RAW" : ""), (changed ? "yes" : "no"));
+            }
+            return 0;
+        }
+        else if (strcmp(command, "PL") == 0) {
             if (or20client(fd)) statusprintf(fd, "ok\n");
             house = getdeviceaddr(&unit);
             dbprintf("house %d unit %d\n", house, unit);
@@ -720,7 +789,7 @@ int processcommandline(int fd, char *aLine)
                 x10bytes8[2] = (house + (rfcamkey - 0x2B)) & 0xFF;
                 x10bytes8[3] = rfcamkey;
                 x10bytes8[4] = house;
-                hexdump(x10bytes8, 5);
+                hexdump_stderr(x10bytes8, 5);
                 cm15a_decode_rf(-1, x10bytes8, 5);
                 if (Cm19a)
                     x10_write(x10bytes8+1, 4);
@@ -734,14 +803,15 @@ int processcommandline(int fd, char *aLine)
         else if (strcmp(command, "PT") == 0) {
             if (or20client(fd)) statusprintf(fd, "ok\n");
             len = gethexdata(x10bytes8);
-            hexdump (x10bytes8, len);
+            hexdump_stderr(x10bytes8, len);
             if (len > 0) x10_write(x10bytes8, len);
         }
-#if 0
+// #if 0
         /* Enable/disable the internal RFTOPL repeater */
         /* This seems to make the device lockup after a while */
         /* bb 40 51 05  00 14 20 28 */
-        else if (strcmp(command, "RFTOPL") == 0) {
+        else if (strcmp(command, "INTRFTOPL") == 0) {
+            dbprintf("Enable internal RF to PL repeater\n");
             unsigned short bitmap16;
             bitmap16 = gethousecodes();
             x10_write("\xdb\x1f\xf0", 3);
@@ -750,15 +820,16 @@ int processcommandline(int fd, char *aLine)
             memcpy(x10bytes8+1, &bitmap16, sizeof(bitmap16));
             x10_write(x10bytes8, 8);
         }
-        else if (strcmp(command, "CMINIT") == 0) {
+
+        else if (strcmp(command, "EXTRFTOPL") == 0 || strcmp(command, "CMINIT") == 0) {
             dbprintf("Disabling internal RF to PL repeater\n");
-            x10_write((unsigned char *)"\x9b\x00\x09\x07\x43\x04\xe0\x03", 8);
-            x10_write((unsigned char *)"\x8b", 1);
-            x10_write((unsigned char *)"\xdb\x1f\xf0", 3);
+            x10_write((unsigned char *)"\x9b\x00\x09\x07\x43\x04\xe0\x03", 8);		// set clock
+            x10_write((unsigned char *)"\x8b", 1);									// get status
+            x10_write((unsigned char *)"\xdb\x1f\xf0", 3);                          // memory read
             x10_write((unsigned char *)"\xfb\x20\x00\x02", 4);
             x10_write((unsigned char *)"\xbb\x00\x00\x05\x00\x14\x20\x28", 8);
         }
-#endif
+//#endif
         else if (strcmp(command, "RFTOPL") == 0) {
             if (or20client(fd)) statusprintf(fd, "ok\n");
             RfToPl16 = gethousecodes();
@@ -823,11 +894,9 @@ void cm15a_encode(int fd, unsigned char * buf, size_t buflen)
     static size_t remlen=0;
     char *remptr;
 
-    dbprintf("buflen %lu\n", (unsigned long)buflen);
-    hexdump(buf, buflen);
-    dbprintf("remlen %lu\n", (unsigned long)remlen);
-    hexdump(remainder, remlen);
-
+    dbprintf("buflen %lu\n hexbytes:", (unsigned long)buflen);
+    hexdump_stderr(buf, buflen);
+    dbprintf("\n");
     /* Break the input stream into \n or \r terminated lines. The stream is not
      * guaranteed to end on a line boundary so there may be left over input
      * which must be processed the next time around.
@@ -845,7 +914,11 @@ void cm15a_encode(int fd, unsigned char * buf, size_t buflen)
         }
         else
             remptr++;
-        buf++;
+	        buf++;
     }
     remlen = remptr - remainder;
 }
+
+
+
+
