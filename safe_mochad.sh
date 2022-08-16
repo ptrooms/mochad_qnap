@@ -214,10 +214,10 @@ run_mochad()
 
         let MAILCNT--
 		if [ $MAILCNT -le 0 ]; then		# prevent overflowing
-           # message "Overflow MAILCNT $MYPID .  $0 will exit=3 now."
+           message "${0} Overflow MAILCNT=${MAILCNT} terminated code=3"
            exit 3 ;
 		fi
-
+		SECONDS=0
 		if test "x$TTY" != "x" ; then
 			cd "${RUNDIR}"
 			echo "running tty $TTY"
@@ -246,25 +246,26 @@ run_mochad()
 			#	n=$((n+1))
 			# done < `/share/homes/admin/mochad/mochad --raw-data -d 3>&1 1>&2- 2>&3-`
 
-
 		fi
 		EXITSTATUS=$?
-		message "${PROGRAM} ended with exit status $EXITSTATUS signal $EXITSIGNAL "
-		echo "${PROGRAM} exit on $EXITSTATUS signal $EXITSIGNAL."
-		if test "xs$EXITSTATUS" = "x0" ; then
+		MESSAGETEXT = "${PROGRAM} status=${EXITSTATUS} signal=${EXITSIGNAL} runtime=${SECONDS}s"
+		if [ $SECONDS -lt 20 ]; then
+			# Elapsed time too short.....
+			message "${MESSAGETEXT} timelapse failure."
+			exit 0
+		elif test "xs$EXITSTATUS" = "x0" ; then
 			# Properly shutdown....
-			message "${PROGRAM} shutdown normally."
+			message "${MESSAGETEXT} shutdown normal."
 			exit 0
 		elif test "0$EXITSTATUS" -gt "128" ; then
 			EXITSIGNAL=$(($EXITSTATUS - 128))
-			echo "${PROGRAM} exited on signal $EXITSIGNAL."
+			MESSAGETEXT = "${MESSAGETEXT} exit ${EXITSIGNAL}"
 			if test "x$NOTIFY" != "x" ; then
-				echo "${PROGRAM} on $MACHINE exited on signal $EXITSIGNAL.  Might want to take a peek." | \
-				# mail -s "${PROGRAM} Died" $NOTIFY
-				message "Exited on signal $EXITSIGNAL"
+				MESSAGETEXT = "${MESSAGETEXT} exited"
 			fi
 			if test "x$EXEC" != "x" ; then
 				$EXEC
+				MESSAGETEXT = "${MESSAGETEXT} exec"
 			fi
 
 			PID=`cat ${MOCvPIDFILE}`
@@ -275,8 +276,7 @@ run_mochad()
 				mv ${RUNDIR}/core ${DUMPDROP}/core.`hostname`-$DATE &
 			fi
 		else
-			message "${PROGRAM} died with code $EXITSTATUS."
-
+			MESSAGETEXT = "${MESSAGETEXT} died"
 			PID=`cat ${MOCvPIDFILE}`
 			DATE=`date "+%Y-%m-%dT%H:%M:%S%z"`
 			if test -f ${RUNDIR}/core.${PID} ; then
@@ -285,7 +285,7 @@ run_mochad()
 				mv ${RUNDIR}/core ${DUMPDROP}/core.`hostname`-$DATE &
 			fi
 		fi
-		message "Automatically restarting ${PROGRAM}."
+		message "${MESSAGETEXT}, restart in $SLEEPSECS seconds."
 		sleep $SLEEPSECS
 		echo 'sleep done'
 		# if test "0$KILLALLMPG123" -gt "0" ; then
