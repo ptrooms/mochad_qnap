@@ -28,7 +28,7 @@ MOCvPIDFILE=${MOCvVARRUNDIR}/mochad.pid		# not used for mochad but left for stat
 # KILLALLMPG123=1				# note used here, pkill does not exist on qnap
 
 # run mochad with this priority
-MAILCNT=2	# max restarts mail count
+MAILCNT=6	# max restarts mail count
 
 
 # run mochad with this priority
