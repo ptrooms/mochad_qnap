@@ -1,8 +1,15 @@
 #!/bin/sh
 # vim:textwidth=80:tabstop=4:shiftwidth=4:smartindent:autoindent
+
+# run mochad with this count
+MAILCNT=7      # max restarts mail count
+
 PROGRAM=mochad
-EMAIL_TO=ptr.ooms@gmail.com
-EMAIL_FROM=qnap.ooms@pafo2.nl
+# EMAIL_TO=ptr.ooms@gmail.com
+EMAIL_TO=qnap@pafo2.nl
+# EMAIL_FROM=qnap.ooms@pafo2.nl
+EMAIL_FROM=qnap@ptro.nl
+# EMAIL_FROM=qnap@pafo2.nl                        # mail sent to for information
 MOCvSBINDIR=/share/homes/admin/mochad		# where mochad is located
 MOCvVARRUNDIR=/share/homes/admin/mochad		# where we will execute (createdZ)
 MOCvVARLOGDIR=${MOCvVARRUNDIR}				# /share/homes/admin/mochad
@@ -23,13 +30,14 @@ RUNDIR=${RUNDIR:-${MOCvVARRUNDIR}/tmp}			# set out running work directory  for m
 SLEEPSECS=8						# prevent topo fast restarts
 MOCvPIDFILE=${MOCvVARRUNDIR}/mochad.pid		# not used for mochad but left for state
 
+if [ ! -f "/var/log/${PROGRAM}" ]; then
+    echo "/var/log/${PROGRAM} log did not exist, will be pointed by ln -s ${MOCvVARLOGDIR} "
+    ln -s "${MOCvVARLOGDIR}" "/var/log/${PROGRAM}"
+fi
+
 # comment this line out to have this script _not_ kill all mpg123 processes when
 # mochad exits
 # KILLALLMPG123=1				# note used here, pkill does not exist on qnap
-
-# run mochad with this priority
-MAILCNT=6	# max restarts mail count
-
 
 # run mochad with this priority
 PRIORITY=0
@@ -48,31 +56,38 @@ PRIORITY=0
 function send_mail() {
 	# Takes one optional parameter to indicate error level as subject prefix ($1)
 	echo "${PROGRAM} notification email ${MAILCNT} : Error level: $1"
-	subject="${PROGRAM} $MOCvSBINDIR"
-    echo  "---- last log file of ${PROGRAM} for ${0} remaining try ${MAILCNT}" >  $RUNDIR/tailmessage.txt	
-	# add message lines
-    echo  "---- ${RUNDIR}/../${PROGRAM}.log" >>  $RUNDIR/tailmessage.txt	
-	tail  -n 15 ${RUNDIR}/../${PROGRAM}.log  >>  $RUNDIR/tailmessage.txt
-    echo  "---- ${RUNDIR}/${PROGRAM}1.log"   >>  $RUNDIR/tailmessage.txt	
-	tail  -n 15 ${RUNDIR}/${PROGRAM}1.log    >> $RUNDIR/tailmessage.txt
-    echo  "---- ${RUNDIR}/${PROGRAM}2.log"   >>  $RUNDIR/tailmessage.txt	
-	tail  -n 15 $RUNDIR}/${PROGRAM}2.log     >> $RUNDIR/tailmessage.txt
+    timestamp=`date '+%Y%m%d%H%M%S'`
+	# timestamp=`date '+%F %T'`
+	subject="${PROGRAM} $MOCvSBINDIR "
+	body="${RUNDIR}/tailmessage_${timestamp}.txt"
+	tmpfile="${RUNDIR}/sendmail_${timestamp}.tmp"
 
-	body=$RUNDIR/tailmessage.txt
-	timestamp=`date '+%F %T'`
-	tmpfile="$RUNDIR/sendmail.tmp"
+    echo  "---- last log file of ${PROGRAM} for ${0} remaining try ${MAILCNT}" >  $body
+	# add log message lines to content
+    echo  "---- ${RUNDIR}/../${PROGRAM}.log" >>  $body
+	tail  -n 15 ${RUNDIR}/../${PROGRAM}.log  >>  $body
+    echo  "---- ${RUNDIR}/${PROGRAM}1.log"   >>  $body
+	tail  -n 15 ${RUNDIR}/${PROGRAM}1.log    >>  $body
+    echo  "---- ${RUNDIR}/${PROGRAM}2.log"   >>  $body
+	tail  -n 15 ${RUNDIR}/${PROGRAM}2.log    >>  $body
+
+    echo "--------------------------------------------------"
+    echo "sendmail.tmp is tmpfile = ${tmpfile} for body = ${body}"
 	/bin/echo -e "Subject:$1 - $subject [$timestamp]\r" > "$tmpfile"
 	/bin/echo -e "To: $EMAIL_TO\r" >> "$tmpfile"
 	/bin/echo -e "From: $EMAIL_FROM\r" >> "$tmpfile"
 	/bin/echo -e "\r" >> "$tmpfile"
 	if [ -f "$body" ]; then
 		#cat "$body" >> "$tmpfile"
+        /bin/echo -e "Datalog in ${body}:\n" >> "$tmpfile"
 		tail -50 "$body" >> "$tmpfile"
 		/bin/echo -e "\r\n" >> "$tmpfile"
 	else
-		/bin/echo -e "$body\r\n" >> "$tmpfile"
+		/bin/echo -e "No file ${body}\r\n" >> "$tmpfile"
 	fi
-
+    rm $body
+	# cat ${tmpfile}
+	# cat ${tmpfile}
 	# --> sendmail: RCPT TO:<ptr.ooms@gmail.com> (553 5.7.1 <qnap.ooms@xs4all.nl>: Sender address rejected: not owned by user ptro@pafo2.nl)
 	/usr/sbin/sendmail -t < "$tmpfile"
 	# rm $tmpfile
@@ -90,6 +105,7 @@ message() {
 	fi
 	send_mail "$mymessage" >&2
 }
+
 
 # Check if mochad is already running.  If it is, then bug out, because
 # starting safe_mochad when mochad is running is very bad.
@@ -123,7 +139,6 @@ else
 	elif `uname -s | grep Darwin /dev/null 2>&1`; then
 		SYSCTL_MAXFILES="kern.maxfiles"
 	fi
-
 
 	if test "x$SYSMAXFILES" != "x"; then
 		if test "x$SYSCTL_MAXFILES" != "x"; then
@@ -208,16 +223,30 @@ fi
 
 let MAILCNT++ 	# minitialise until 1 = reached
 let MAILCNT++ 	# minitialise until 1 = reached
-run_mochad()
-{
-	while :; do 
+DATE2=`date +%D`
+echo "${PROGRAM} about to start ${DATE2} run"
 
-        let MAILCNT--
+run_mochad() 
+{
+    echo "${PROGRAM} about to start ${DATE2} while"
+
+	while :; do 
+        DATE1=`date +%D`
+
+        if test "$DATE1" == "$DATE2" ; then
+           let MAILCNT--
+        else
+           let MAILCNT++
+        fi
+
 		if [ $MAILCNT -le 0 ]; then		# prevent overflowing
-           message "${0} Overflow MAILCNT=${MAILCNT} terminated code=3"
-           exit 3 ;
+             message "${0} Overflow MAILCNT=${MAILCNT} same ${DATE1} terminated code=3"
+             exit 3 ;
 		fi
+
+        DATE2=`date +%D`
 		SECONDS=0
+
 		if test "x$TTY" != "x" ; then
 			cd "${RUNDIR}"
 			echo "running tty $TTY"
@@ -226,12 +255,14 @@ run_mochad()
 		else
 			# mochad --raw-data -d 2>&1 | ts %H:%M:%.S > mochad.log &
 			cd "${RUNDIR}"
-			echo "not running tty $TTY"
+			echo "not running tty $TTY, doing ${MOCvSBINDIR}/${PROGRAM} ${MOCvARGS} ${CLIARGS}"
 			# nice -n $PRIORITY ${MOCvSBINDIR}/mochad ${MOCvARGS} ${CLIARGS} >> mochad.log 1>&2
 			# ( ${MOCvSBINDIR}/mochad ${MOCvARGS} ${CLIARGS}  2> mochad2.log 1>&2 )  # produce header & debugged output in this file
-			( ${MOCvSBINDIR}/mochad ${MOCvARGS} ${CLIARGS}  1> mochad1.log 2>&1 )
+			( ${MOCvSBINDIR}/${PROGRAM} ${MOCvARGS} ${CLIARGS}  1> mochad1.log 2>&1 )
 
 			# echo "${MOCvSBINDIR}/mochad ${MOCvARGS} ${CLIARGS} 2> mochad2.log 1 1> mochad1.log"
+            # exit 99
+
 			# echo `${MOCvSBINDIR}/mochad ${MOCvARGS} ${CLIARGS} 2> mochad2.log 1 1> mochad1.log`
 			# ( /share/homes/admin/mochad/mochad --raw-data -d 3>&1 1>&2- 2>&3- ) 2>&1 | ts > mochad2.log
 			# /share/homes/admin/mochad/mochad --raw-data -d 3>&1 1>&2- 2>&3- >> mochad.log
@@ -247,6 +278,7 @@ run_mochad()
 			# done < `/share/homes/admin/mochad/mochad --raw-data -d 3>&1 1>&2- 2>&3-`
 
 		fi
+	      # message "${PROGRAM} ended with exit status $?"
 		EXITSTATUS=$?
 		MESSAGETEXT = "${PROGRAM} status=${EXITSTATUS} signal=${EXITSIGNAL} runtime=${SECONDS}s"
 		if [ $SECONDS -lt 20 ]; then
@@ -285,15 +317,18 @@ run_mochad()
 				mv ${RUNDIR}/core ${DUMPDROP}/core.`hostname`-$DATE &
 			fi
 		fi
-		message "${MESSAGETEXT}, restart in $SLEEPSECS seconds."
+		message "${MESSAGETEXT}, ${MAILCNT} restart since ${DATE1} in $SLEEPSECS seconds."
 		sleep $SLEEPSECS
 		echo 'sleep done'
 		# if test "0$KILLALLMPG123" -gt "0" ; then
 		#	echo 'killing other processes before we restart'
 		#	pkill -9 mpg123
 		# fi
+                DATE1=`date +%D`
 	done
+    echo "${PROGRAM} about to start ${DATE2} step done"
 }
 
 run_mochad &
+sleep 1
 message "${PROGRAM} started normally."
