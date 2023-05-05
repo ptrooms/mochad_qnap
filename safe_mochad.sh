@@ -1,6 +1,7 @@
 #!/bin/sh
 # vim:textwidth=80:tabstop=4:shiftwidth=4:smartindent:autoindent
 # 05may23 updated to improve messaging & auto create missing link /var/log/mochad
+# ... note 03mar23 github changed rsa key
 
 # run mochad with this count
 MAILCNT=7      # max restarts mail count
